@@ -1,0 +1,243 @@
+{
+	"info": {
+		"_postman_id": "bbef8ab9-d45c-43f9-b48a-60e234fb9f85",
+		"name": "Apigee Migration API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "health",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test Description: Verify that a status code of 200 is returned",
+							"pm.test(\"Status code is 200\", function () {",
+							"    // console.log(pm.response.code);",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Content-Type is present and correct\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"    pm.expect(pm.response.headers.get('content-type')).to.include('application/json');",
+							"});",
+							"",
+							"pm.test(\"Response body matches request\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"    pm.expect(jsonData.message).to.be.eq('application is connected to db');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}health",
+					"host": [
+						"{{base_url}}health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "validate stage sharedflow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test Description: Verify that a status code of 200 is returned",
+							"pm.test(\"Status code is 200\", function () {",
+							"    // console.log(pm.response.code);",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Content-Type is present and correct\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"    pm.expect(pm.response.headers.get('content-type')).to.include('application/json');",
+							"});",
+							"",
+							"pm.test(\"Response body matches request\", function() {",
+							"    var jsonData = pm.response.json();",
+							"",
+							"    pm.expect(jsonData).to.have.property('result');",
+							"    pm.expect(jsonData.result).to.have.property('SUCCESS');",
+							"    ",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"metadata\": {\n        \"tenant-prefix\": \"adex\",\n        \"username\": \"mkerry@fas.harvard.edu\",\n        \"userRoles\": [\"adex-developer\"],\n        \"ipAddr\": null\n    },\n    \"request\": {\n        \"buildTags\":\"testing build persist log\",\n        \"comment\":\"this is a build test for shared flow\",\n        \"sharedflows\":[{\"name\":\"adex-dummy-shared-flow\", \"revision\":\"2\"}],\n        \"proxies\":[],\n        \"products\":[],\n        \"specs\":[]\n    }\n} "
+				},
+				"url": {
+					"raw": "{{base_url}}validate/stage",
+					"host": [
+						"{{base_url}}validate"
+					],
+					"path": [
+						"stage"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "validate stage sharedflow - FAIL",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test Description: Verify that a status code of 200 is returned",
+							"pm.test(\"Status code is 400\", function () {",
+							"    // console.log(pm.response.code);",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Content-Type is present and correct\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"    pm.expect(pm.response.headers.get('content-type')).to.include('application/json');",
+							"});",
+							"",
+							"pm.test(\"Response body matches request\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.expect(jsonData).to.have.property('result');",
+							"    pm.expect(jsonData.result).to.have.property('ERROR');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"metadata\": {\n        \"tenant-prefix\": \"adex\",\n        \"username\": \"mkerry@fas.harvard.edu\",\n        \"userRoles\": [\"adex-developer\"],\n        \"ipAddr\": null\n    },\n    \"request\": {\n        \"buildTags\":\"testing build persist log\",\n        \"comment\":\"this is a build test for shared flow\",\n        \"sharedflows\":[{\"name\":\"ade-dummy-shared-flow\", \"revision\":\"2\"}],\n        \"proxies\":[],\n        \"products\":[],\n        \"specs\":[]\n    }\n} "
+				},
+				"url": {
+					"raw": "{{base_url}}validate/stage",
+					"host": [
+						"{{base_url}}validate"
+					],
+					"path": [
+						"stage"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "migrate stage sharedflow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test Description: Verify that a status code of 200 is returned",
+							"pm.test(\"Status code is 200\", function () {",
+							"    // console.log(pm.response.code);",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Content-Type is present and correct\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"    pm.expect(pm.response.headers.get('content-type')).to.include('application/json');",
+							"});",
+							"",
+							"pm.test(\"Response body matches request\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.expect(jsonData).to.have.property('result');",
+							"    pm.expect(jsonData.result).to.have.property('SUCCESS');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"metadata\": {\n        \"tenant-prefix\": \"adex\",\n        \"username\": \"mkerry@fas.harvard.edu\",\n        \"userRoles\": [\"adex-developer\"],\n        \"ipAddr\": null\n    },\n    \"request\": {\n        \"buildTags\":\"testing build persist log\",\n        \"comment\":\"this is a build test for shared flow\",\n        \"sharedflows\":[{\"name\":\"adex-dummy-shared-flow\"}],\n        \"proxies\":[],\n        \"products\":[],\n        \"specs\":[]\n    }\n} "
+				},
+				"url": {
+					"raw": "{{base_url}}migrate/stage",
+					"host": [
+						"{{base_url}}migrate"
+					],
+					"path": [
+						"stage"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "migrate stage sharedflow - VALIDATION ERROR",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test Description: Verify that a status code of 200 is returned",
+							"pm.test(\"Status code is 400\", function () {",
+							"    // console.log(pm.response.code);",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Content-Type is present and correct\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"    pm.expect(pm.response.headers.get('content-type')).to.include('application/json');",
+							"});",
+							"",
+							"pm.test(\"Response body matches request\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.expect(jsonData).to.have.property('result');",
+							"    pm.expect(jsonData.result).to.have.property('ERROR');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"metadata\": {\n        \"tenant-prefix\": \"adex\",\n        \"username\": \"mkerry@fas.harvard.edu\",\n        \"userRoles\": [\"adex-developer\"],\n        \"ipAddr\": null\n    },\n    \"request\": {\n        \"buildTags\":\"testing build persist log\",\n        \"comment\":\"this is a build test for shared flow\",\n        \"sharedflows\":[{\"name\":\"ade-dummy-shared-flow\"}],\n        \"proxies\":[],\n        \"products\":[],\n        \"specs\":[]\n    }\n} "
+				},
+				"url": {
+					"raw": "{{base_url}}migrate/stage",
+					"host": [
+						"{{base_url}}migrate"
+					],
+					"path": [
+						"stage"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
