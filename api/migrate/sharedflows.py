@@ -26,7 +26,8 @@ def migrate_shared_flows(shared_flow_list: list, target_env:Env) -> list:
                                                          action='download',
                                                          param_dict={'sharedflow_name': shared_flow_name, 'rev_no': rev_no})
             bundle = REQUEST_FACTORY.download(url=download_url)
-            with open(REQUEST_FACTORY.endpoint_info['sharedflows']['filename'], "wb") as file:
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            with open(f"{dir_path}/files/{filename}", "wb") as file:
                 file.write(bundle.content)
 
             # post bundle to target env
@@ -34,7 +35,7 @@ def migrate_shared_flows(shared_flow_list: list, target_env:Env) -> list:
                                                        artifact_name='sharedflows',
                                                        action='upload',
                                                        param_dict={'sharedflow_name': shared_flow_name})
-            response = REQUEST_FACTORY.upload_revision(upload_url, filename)
+            response = REQUEST_FACTORY.upload_revision(upload_url, f"{dir_path}/files/{filename}")
             if response.status_code == 201:
                 upload_data = response.json()
                 response_log_entry['upload'] = upload_data

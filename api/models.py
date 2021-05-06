@@ -9,7 +9,6 @@ DATE_TIME_SORT_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 class ApigeeMgmtLog(models.Model):
-    id = models.FloatField(primary_key=True)
     tenant_prefix = models.CharField(max_length=10, blank=True, null=True)
     request_text = models.TextField(blank=True, null=True)
     response_text = models.TextField(blank=True, null=True)
@@ -20,9 +19,6 @@ class ApigeeMgmtLog(models.Model):
     user_roles = models.CharField(max_length=1024, blank=True, null=True)
     build_tags = models.CharField(max_length=1024, blank=True, null=True)
     build_comment = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'apigee_mgmt_log'
 
     def serialize(self):
         return {

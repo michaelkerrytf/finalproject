@@ -3,6 +3,7 @@ import json
 
 from django.http import JsonResponse, HttpResponse, Http404
 from django.db import connections
+from django.views.decorators.csrf import csrf_exempt
 
 # These views 'mock' the real Apigee Management API responses for the specific
 # calls to migrate the 'adex-dummy-shared-flow'. I pulled them from the working
@@ -66,17 +67,19 @@ def bundle(request, org_name, sharedflow_name: str, rev_no: int):
         raise Http404
     filename = 'adex-dummy-shared-flow-bundle.zip'
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    zip_file = open(f"{dir_path}/files/{filename}", 'rb').read()
+    with open(f"{dir_path}/files/{filename}", 'rb') as fh:
+        zip_file = fh.read()
     response = HttpResponse(zip_file, content_type='application/octet-stream')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 
+@csrf_exempt
 def post(request, org_name):
-    action_value = request.POST['action']
+    action_value = request.GET['action']
     if action_value != 'import':
         raise Http404
-    name_value = request.POST['name']
+    name_value = request.GET['name']
     if request.method == 'POST' and name_value == 'adex-dummy-shared-flow':
         return JsonResponse(
             {
@@ -115,7 +118,7 @@ def post(request, org_name):
                 "targetServers": [],
                 "targets": [],
                 "type": "Application"
-            })
+            }, status=201)
     else:
         return JsonResponse(
             {
@@ -123,10 +126,11 @@ def post(request, org_name):
                 'org_name': org_name,
                 'shared_flow_name': name_value,
                 'action': action_value
-            }
+            }, status=201
         )
 
 
+@csrf_exempt
 def deploy(request, org_name, env_name: str, sharedflow_name: str, rev_no: int):
     delay_value = request.GET['delay']
     force_value = request.GET['force']
@@ -155,7 +159,7 @@ def deploy(request, org_name, env_name: str, sharedflow_name: str, rev_no: int):
             ],
             "sharedFlow": f"{sharedflow_name}",
             "state": "deployed"
-        })
+        }, status=200)
     else:
         return JsonResponse({
             'view': 'deploy',
@@ -164,7 +168,7 @@ def deploy(request, org_name, env_name: str, sharedflow_name: str, rev_no: int):
             'sharedflow_name': sharedflow_name,
             'rev_no': rev_no,
             'delay': delay_value,
-            'force': force_value})
+            'force': force_value}, status=200)
 
 
 def userinfo(request, org_name, userrole_name: str):
@@ -183,6 +187,7 @@ def userinfo(request, org_name, userrole_name: str):
                              'userrole_name': userrole_name})
 
 
+@csrf_exempt
 def assign(request, org_name, userrole_name: str):
     response_body = {
         'view': 'assign',
@@ -201,7 +206,7 @@ def assign(request, org_name, userrole_name: str):
             }
         else:
             response_body['request'] = data
-    return JsonResponse(response_body)
+    return JsonResponse(response_body, status=201)
 
 
 full_success_response = {

@@ -1,1 +1,3 @@
 # finalproject
+
+user & pwd: admin
