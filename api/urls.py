@@ -4,6 +4,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("", views.bare_index, name="bare_index"),
     path("view/logs/<str:tenant_prefix>", views.index, name="index"),
     path("health", views.health, name="health"),
     path("migrate/stage", views.stage, name="stage"),

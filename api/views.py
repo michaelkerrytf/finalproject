@@ -32,6 +32,10 @@ def method_unsupported(method):
     return server_error(message= f"{method} unsupported", status=405)
 
 
+def bare_index(request):
+    return HttpResponseRedirect('view/logs/adex')
+
+
 def index(request, tenant_prefix):
 
     # Authenticated users view their inbox
