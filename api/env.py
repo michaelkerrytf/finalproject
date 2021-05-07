@@ -12,12 +12,12 @@ class Env(Enum):
     @staticmethod
     def get_migration_map():
         return {
-            "stage": {
+            Env.STAGE: {
                 "src": "harvard-nonprod",
                 "dest": "harvard-preprod",
                 "deploy": "stage"
             },
-            "prod": {
+            Env.PROD: {
                 "src": "harvard-preprod",
                 "dest": "harvard",
                 "deploy": "prod"
@@ -25,10 +25,10 @@ class Env(Enum):
         }
 
     def get_src(self):
-        return self.get_migration_map()[self.value]['src']
+        return self.get_migration_map()[self]['src']
 
     def get_dest(self):
-        return self.get_migration_map()[self.value]['dest']
+        return self.get_migration_map()[self]['dest']
     
     def get_deploy(self):
-        return self.get_migration_map()[self.value]['deploy']
+        return self.get_migration_map()[self]['deploy']

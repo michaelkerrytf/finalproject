@@ -23,15 +23,31 @@ def success_response(message, status: int = 200):
     return JsonResponse(data={"message": f"{message}"}, status=status)
 
 
-def server_error(message:str, status:int = 500):
+def server_error(message: str, status: int = 500):
+    """
+    returns server error message
+    :param message:
+    :param status:
+    :return:
+    """
     return JsonResponse(data={"message": f"ERROR: {message}"}, status=status)
 
 
 def method_unsupported(method):
+    """
+    helper method for dealing with unsupported request methods (e.g., PUT, PATCH, etc.)
+    :param method:
+    :return:
+    """
     return server_error(message= f"{method} unsupported", status=405)
 
 
 def bare_index(request):
+    """
+
+    :param request:
+    :return:
+    """
     return HttpResponseRedirect('view/logs/all')
 
 
@@ -64,6 +80,11 @@ def health(request):
 
 
 def get_client_ip(request):
+    """
+    helper method to infer the request's ip address, in order to log it
+    :param request:
+    :return:
+    """
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0]
@@ -87,9 +108,9 @@ def handle_migration_request(request, target_env: Env):
         if request.body is not None:
             try:
                 migration_request = json.loads(request.body)
-                migration_request['destination'] = target_env.value
                 if 'metadata' not in migration_request:
                     migration_request['metadata'] = {}
+                migration_request['metadata']['destination'] = target_env.value
                 if 'ipAddr' not in migration_request['metadata'] or not migration_request['metadata']['ipAddr']:
                     migration_request['metadata']['ipAddr'] = get_client_ip(request=request)
                 return migrate(migration_request, target_env)
@@ -102,6 +123,12 @@ def handle_migration_request(request, target_env: Env):
 
 
 def handle_validation_request(request, target_env: Env):
+    """
+    handles validation request; error checking, and adds any missing metadata
+    :param request:
+    :param target_env:
+    :return:
+    """
     if target_env is None:
         return server_error("migration requires a target env", 400)
     if request.method == "GET":
@@ -126,21 +153,41 @@ def handle_validation_request(request, target_env: Env):
 
 @csrf_exempt
 def stage(request):
+    """
+    initiates a migration to stage
+    :param request:
+    :return:
+    """
     return handle_migration_request(request, Env.STAGE)
 
 
 @csrf_exempt
 def validate_stage(request):
+    """
+    initiates a validation against stage
+    :param request:
+    :return:
+    """
     return handle_validation_request(request, Env.STAGE)
 
 
 @csrf_exempt
 def prod(request):
+    """
+    initiates a migration to prod
+    :param request:
+    :return:
+    """
     return handle_migration_request(request, Env.PROD)
 
 
 @csrf_exempt
 def validate_prod(request):
+    """
+    initiates a validation against prod
+    :param request:
+    :return:
+    """
     return handle_validation_request(request, Env.PROD)
 
 
@@ -154,16 +201,18 @@ def return_logs_payload(logs_payload, count, offset, base_url):
     :return:
     """
     return JsonResponse(data={
-        "count": count,
-        "prev": f"{base_url}?offset={max(offset - 10, 0)}",
-        "curr": f"{base_url}?offset={offset}",
-        "next": f"{base_url}?offset={min(offset + 10, int((count-1)/10) * 10)}",
+        "meta": {
+            "count": count,
+            "offset": offset,
+            "prev": f"{base_url}?offset={max(offset - 10, 0)}",
+            "curr": f"{base_url}?offset={offset}",
+            "next": f"{base_url}?offset={min(offset + 10, int((count-1)/10) * 10)}",
+        },
         "logs": [log.serialize() for log in logs_payload]
     }, safe=False, status=200)
 
 
 @csrf_exempt
-# @login_required
 def logs(request, tenant_prefix):
     """
     returns paginated logs for tenant prefix, using offset (defaults to 0)

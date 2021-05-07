@@ -27,7 +27,7 @@
 							"    var jsonData = pm.response.json();",
 							"    ",
 							"    pm.expect(jsonData).to.have.property('message');",
-							"    pm.expect(jsonData.message).to.be.eq('application is connected to db');",
+							"    pm.expect(jsonData.message).to.be.eq('api is connected to db');",
 							"});"
 						],
 						"type": "text/javascript"

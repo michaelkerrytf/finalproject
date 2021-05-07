@@ -13,7 +13,12 @@ def cleanup(text):
 
 
 class ApigeeMgmtLog(models.Model):
+    """
+    encapsulates relevant logging information for migration requests
+    """
     tenant_prefix = models.CharField(max_length=10, blank=True, null=True)
+    destination = models.CharField(max_length=10, blank=True, null=True)
+    status = models.CharField(max_length=10, blank=True, null=True)
     request_text = models.TextField(blank=True, null=True)
     response_text = models.TextField(blank=True, null=True)
     ip_addr = models.CharField(max_length=32, blank=True, null=True)
@@ -28,6 +33,8 @@ class ApigeeMgmtLog(models.Model):
         return {
             "id": self.id,
             "tenantPrefix": self.tenant_prefix,
+            "destination": self.destination,
+            "status": self.status,
             "requestText": json.dumps(json.loads(self.request_text), indent=2),
             "responseText": json.dumps(json.loads(self.response_text), indent=2),
             "ipAddr": self.ip_addr,

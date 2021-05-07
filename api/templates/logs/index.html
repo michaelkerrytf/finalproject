@@ -7,7 +7,8 @@
 | <a href="/api/view/logs/{{ prefix }}">{{ prefix }}</a>
 {% endfor %}
 <hr>
-<h2>Apigee Migration Tool Logs for <span id="tenant-prefix">{{ tenant_prefix }}</span></h2>
+<h2>Apigee Migration Tool Logs - <span id="tenant-prefix">{{ tenant_prefix }}</span>
+</h2>
 <hr>
 
 <nav aria-label="Page navigation">
@@ -22,7 +23,9 @@
                 <span aria-hidden="true">Next</span>
             </button>
         </li>
+        <li id="pagination-info"></li>
     </ul>
+
 </nav>
 <div id="logs-view"></div>
 

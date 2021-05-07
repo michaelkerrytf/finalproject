@@ -22,19 +22,24 @@ document.addEventListener('DOMContentLoaded', function() {
  * @param str
  * @returns {string|*}
  */
-function truncate_pad(str) {
-    if (str.length === 23) {
+function fix_width(str, width) {
+    if (!width) {
+        width = 23; // default
+    }
+    if (str.length === width) {
         return str;
-    } else if (str.length > 23) {
-        return str.slice(0,20) + '...';
+    } else if (str.length > width) {
+        return str.slice(0, width - 3) + '...';
     } else {
-
-        const padding = Array(23 - str.length).join('&nbsp;')
+        const padding = Array(width - str.length).join('&nbsp;')
         return ( str + padding);
     }
 }
 
-
+/**
+ * uses the link to fetch the appropriate logs, then delegates for display processing
+ * @param link
+ */
 function load_logs(link) {
     const tenantPrefix = document.querySelector('#tenant-prefix').textContent;
     if (!link) {
@@ -45,28 +50,49 @@ function load_logs(link) {
     fetch(link)
         .then(response => response.json())
         .then(logs => {
+            process_pagination(logs.meta);
             process_logs(logs.logs);
-            process_nav_btns(logs.prev, logs.curr, logs.next);
         });
 }
 
-function process_nav_btns(prev, curr, next) {
+/**
+ * sets up prev next buttons and pagination info display
+ * @param meta
+ */
+function process_pagination(meta) {
     const prevBtn = document.querySelector("#previous-page-btn");
     const nextBtn = document.querySelector("#next-page-btn");
-    prevBtn.setAttribute('data-link', `${prev}`);
-    nextBtn.setAttribute('data-link', `${next}`);
-    if (prev === curr) {
-        prevBtn.style.display = 'none';
+    prevBtn.setAttribute('data-link', `${meta.prev}`);
+    nextBtn.setAttribute('data-link', `${meta.next}`);
+    if (meta.prev === meta.curr) {
+        prevBtn.querySelector('button').setAttribute('disabled','disabled');
     } else {
-        prevBtn.style.display = 'inline';
+        prevBtn.querySelector('button').removeAttribute('disabled');
     }
-    if (next === curr) {
-        nextBtn.style.display = 'none';
+    if (meta.next === meta.curr) {
+        nextBtn.querySelector('button').setAttribute('disabled','disabled');
     } else {
-        nextBtn.style.display = 'inline';
+        nextBtn.querySelector('button').removeAttribute('disabled');
     }
+
+    const paginationInfoSpan = document.querySelector('#pagination-info');
+    paginationInfoSpan.innerHTML = `Displaying logs ${meta.offset + 1} - ${Math.min(meta.offset + 10, meta.count)} of ${meta.count}`;
 }
 
+
+/**
+ * gets link from button and uses that to fetch and display the next section of logs
+ * @param btn
+ */
+function handlePrevNext(btn) {
+    const link = btn.getAttribute('data-link');
+    load_logs(link);
+}
+
+/**
+ * clears logs displayed and then creates new logs accordion, then populates items/rows
+ * @param logs
+ */
 function process_logs(logs){
     const logsDiv = document.querySelector('#logs-view');
     logsDiv.innerHTML = '';
@@ -82,6 +108,11 @@ function process_logs(logs){
     }
 }
 
+/**
+ * creates wrapper around entire accordion item
+ * @param log
+ * @returns {HTMLDivElement}
+ */
 function create_log_row(log) {
     console.log(log);
 
@@ -94,8 +125,13 @@ function create_log_row(log) {
     return wrapper;
 }
 
+/**
+ * creates content displayed in accordion item header based on log entry
+ * @param log
+ * @returns {HTMLHeadingElement}
+ */
 function create_row_display_text(log) {
-    const header = document.createElement('h2');
+    const header = document.createElement('h3');
     header.classList.add('accordion-header');
     header.id = `header-${log.id}`;
 
@@ -103,40 +139,36 @@ function create_row_display_text(log) {
 
     const timestampSpan = document.createElement('span');
     timestampSpan.style.marginRight = "10%";
-    timestampSpan.innerHTML = log.timestamp;
+    timestampSpan.innerHTML = log.timestamp + ' UTC';
     headerButton.append(timestampSpan);
 
     const leftSpan = document.createElement('span');
     let imageSrc, titleMsg;
-    if(log.responseText.includes('ERROR')) {
+    if(log.status === 'error') {
         imageSrc = 'red-x.png';
         titleMsg = 'Migration failed...';
     }
-    if (log.responseText.includes('SUCCESS')) {
+    if(log.status === 'invalid') {
+        imageSrc = 'yellow-warning.jpg';
+        titleMsg = 'Invalid Migration request';
+    }
+    if (log.status === 'success') {
         imageSrc = 'green-check.jpg';
         titleMsg = 'Migration succeeded!';
     }
-    leftSpan.innerHTML = `Migrated By: ${truncate_pad(log.username)} <img src="/static/images/${imageSrc}" height="24" width="24" title="${titleMsg}">`;
+    leftSpan.innerHTML = `By ${fix_width(log.username, 25)} -> ${fix_width(log.destination, 25)} <img src="/static/images/${imageSrc}" height="24" width="24" title="${titleMsg}">`;
     headerButton.append(leftSpan);
-
-    const icon = document.createElement('svg');
-    icon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    icon.setAttribute('width', '16');
-    icon.setAttribute('height', '16');
-    icon.setAttribute('fill', 'currentColor');
-    icon.setAttribute('className', 'bi bi-check');
-    icon.setAttribute('viewBox', '0 0 16 16');
-
-    const path = document.createElement('path');
-    path.setAttribute('d','M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z');
-    icon.append(path);
-    leftSpan.append(icon)
 
     header.append(headerButton);
 
     return header;
 }
 
+/**
+ * creates accordion item wrapper - initially hidden
+ * @param log
+ * @returns {HTMLDivElement}
+ */
 function create_body_wrapper(log){
     const bodyWrapper = document.createElement('div');
     bodyWrapper.classList.add('accordion-collapse', 'collapse');
@@ -144,16 +176,21 @@ function create_body_wrapper(log){
     bodyWrapper.setAttribute('data-bs-parent', '#logs-accordion');
     bodyWrapper.setAttribute('aria-labelledby', `header-${log.id}`);
 
-    bodyWrapper.append(create_body(log));
+    bodyWrapper.append(createBody(log));
     return bodyWrapper;
 }
 
-function create_body(log) {
+/**
+ * creates and adds content for the initially hidden portion of the accordion item
+ * @param log
+ * @returns {HTMLDivElement}
+ */
+function createBody(log) {
     const body = document.createElement('div');
     body.classList.add('accordion-body');
 
     const usernameHeader = document.createElement('h6');
-    usernameHeader.innerHTML = `Created by: ${log.username}`;
+    usernameHeader.innerHTML = `Migrated by: ${log.username}`;
     body.append(usernameHeader);
 
     const userRolesHeader = document.createElement('h6');
@@ -196,7 +233,11 @@ function create_body(log) {
     return body;
 }
 
-
+/**
+ * create section of accordion that shows on load and controls display/hide
+ * @param log
+ * @returns {HTMLButtonElement}
+ */
 function create_header_button(log) {
 
     const headerButton = document.createElement('button');
@@ -209,9 +250,4 @@ function create_header_button(log) {
     headerButton.setAttribute('aria-controls', `collapse-${log.id}`);
 
     return headerButton;
-}
-
-function handlePrevNext(btn) {
-    const link = btn.getAttribute('data-link');
-    load_logs(link);
 }
