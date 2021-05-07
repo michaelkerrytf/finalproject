@@ -107,9 +107,30 @@ function create_row_display_text(log) {
     headerButton.append(timestampSpan);
 
     const leftSpan = document.createElement('span');
-    leftSpan.innerHTML = `Migrated By: ${truncate_pad(log.username)}`;
-
+    let imageSrc, titleMsg;
+    if(log.responseText.includes('ERROR')) {
+        imageSrc = 'red-x.png';
+        titleMsg = 'Migration failed...';
+    }
+    if (log.responseText.includes('SUCCESS')) {
+        imageSrc = 'green-check.jpg';
+        titleMsg = 'Migration succeeded!';
+    }
+    leftSpan.innerHTML = `Migrated By: ${truncate_pad(log.username)} <img src="/static/images/${imageSrc}" height="24" width="24" title="${titleMsg}">`;
     headerButton.append(leftSpan);
+
+    const icon = document.createElement('svg');
+    icon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    icon.setAttribute('width', '16');
+    icon.setAttribute('height', '16');
+    icon.setAttribute('fill', 'currentColor');
+    icon.setAttribute('className', 'bi bi-check');
+    icon.setAttribute('viewBox', '0 0 16 16');
+
+    const path = document.createElement('path');
+    path.setAttribute('d','M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z');
+    icon.append(path);
+    leftSpan.append(icon)
 
     header.append(headerButton);
 
