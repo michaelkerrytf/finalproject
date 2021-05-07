@@ -81,54 +81,49 @@ def post(request, org_name):
         raise Http404
     name_value = request.GET['name']
     tenant_prefix = name_value.split('-')[0]
-    if request.method == 'POST':
-        return JsonResponse(
-            {
-                "basepaths": [],
-                "configurationVersion": {
-                    "majorVersion": 4, "minorVersion": 0
-                },
-                "contextInfo": "Revision 28 of application -NA-, in organization -NA-",
-                "createdAt": 1620239321956,
-                "createdBy": "apigee-nonprod-common@harvard.edu",
-                "description": "for testing management api",
-                "displayName": f"{tenant_prefix}-dummy-shared-flow",
-                "entityMetaDataAsProperties": {
-                    "bundle_type": "zip",
-                    "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
-                    "createdBy": "apigee-nonprod-common@harvard.edu",
-                    "lastModifiedAt": "1620239321956",
-                    "subType": "null",
-                    "createdAt": "1620239321956"
-                },
-                "lastModifiedAt": 1620239321956,
-                "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
-                "manifestVersion": "SHA-512:f9ec561eba70e29c6e7e94bd6ff18cb849cbf0559f3e8e53eb3c1bf775d97a32a55fccb37d0988a0d6fc9472ed39c4373850750061a23bca28bbd36da6a60c00",
-                "name": f"{tenant_prefix}-dummy-shared-flow",
-                "policies": [
-                    f"{tenant_prefix}-dummy-assign-message-policy"
-                ],
-                "proxies": [],
-                "resourceFiles": {
-                    "resourceFile": []
-                },
-                "resources": [],
-                "revision": "28",
-                "sharedFlows": ["default"],
-                "spec": "",
-                "targetServers": [],
-                "targets": [],
-                "type": "Application"
-            }, status=201)
+    if org_name == 'harvard':
+        response_org_name = 'preprod'
     else:
-        return JsonResponse(
-            {
-                'view': 'post',
-                'org_name': org_name,
-                'shared_flow_name': name_value,
-                'action': action_value
-            }, status=201
-        )
+        response_org_name = 'nonprod'
+
+    return JsonResponse(
+        {
+            "basepaths": [],
+            "configurationVersion": {
+                "majorVersion": 4, "minorVersion": 0
+            },
+            "contextInfo": "Revision 28 of application -NA-, in organization -NA-",
+            "createdAt": 1620239321956,
+            "createdBy": f"apigee-{response_org_name}-common@harvard.edu",
+            "description": "for testing management api",
+            "displayName": f"{tenant_prefix}-dummy-shared-flow",
+            "entityMetaDataAsProperties": {
+                "bundle_type": "zip",
+                "lastModifiedBy": f"apigee-{response_org_name}-common@harvard.edu",
+                "createdBy": f"apigee-{response_org_name}-common@harvard.edu",
+                "lastModifiedAt": "1620239321956",
+                "subType": "null",
+                "createdAt": "1620239321956"
+            },
+            "lastModifiedAt": 1620239321956,
+            "lastModifiedBy": f"apigee-{response_org_name}-common@harvard.edu",
+            "manifestVersion": "SHA-512:f9ec561eba70e29c6e7e94bd6ff18cb849cbf0559f3e8e53eb3c1bf775d97a32a55fccb37d0988a0d6fc9472ed39c4373850750061a23bca28bbd36da6a60c00",
+            "name": f"{tenant_prefix}-dummy-shared-flow",
+            "policies": [
+                f"{tenant_prefix}-dummy-assign-message-policy"
+            ],
+            "proxies": [],
+            "resourceFiles": {
+                "resourceFile": []
+            },
+            "resources": [],
+            "revision": "28",
+            "sharedFlows": ["default"],
+            "spec": "",
+            "targetServers": [],
+            "targets": [],
+            "type": "Application"
+        }, status=201)
 
 
 @csrf_exempt
@@ -194,7 +189,7 @@ def assign(request, org_name, userrole_name: str):
 
     return JsonResponse(response_body, status=201)
 
-
+# here's an example of the successful migration in the real system
 full_success_response = {
     "result": {
         "SUCCESS": "Successfully migrated payload"
