@@ -1,7 +1,6 @@
 import json
 
 from django.shortcuts import HttpResponseRedirect, render
-from django.urls import reverse
 from django.http import JsonResponse
 from django.db import connections
 from django.views.decorators.csrf import csrf_exempt
@@ -33,20 +32,21 @@ def method_unsupported(method):
 
 
 def bare_index(request):
-    return HttpResponseRedirect('view/logs/adex')
+    return HttpResponseRedirect('view/logs/all')
 
 
 def index(request, tenant_prefix):
-
-    # Authenticated users view their inbox
-    # if request.user.is_authenticated:
+    """
+    Renders the index page, which will display the logs via ajax call
+    :param request:
+    :param tenant_prefix:
+    :return:
+    """
+    tenant_prefix_list = [item['tenant_prefix'] for item in list(ApigeeMgmtLog.objects.order_by('tenant_prefix').values('tenant_prefix').distinct().all())]
     return render(request, "logs/index.html", {
-        'tenant_prefix': tenant_prefix
+        'tenant_prefix': tenant_prefix,
+        'tenant_prefix_list': tenant_prefix_list
     })
-
-    # Everyone else is prompted to sign in
-    # else:
-      #  return HttpResponseRedirect(reverse("login"))
 
 
 def health(request):
@@ -173,45 +173,14 @@ def logs(request, tenant_prefix):
     """
     if "GET" == request.method:
         offset = max(int(request.GET.get('offset', 0)), 0)
-        count = ApigeeMgmtLog.objects.filter(tenant_prefix=tenant_prefix).count()
-        results = ApigeeMgmtLog.objects\
-            .filter(tenant_prefix=tenant_prefix)\
-            .order_by("-created_date")\
-            .all()[offset:offset+10]
+        if tenant_prefix == 'all':
+            count = ApigeeMgmtLog.objects.count()
+            results = ApigeeMgmtLog.objects.order_by("-created_date").all()[offset:offset + 10]
+        else:
+            count = ApigeeMgmtLog.objects.filter(tenant_prefix=tenant_prefix).count()
+            results = ApigeeMgmtLog.objects\
+                .filter(tenant_prefix=tenant_prefix)\
+                .order_by("-created_date")\
+                .all()[offset:offset+10]
         return return_logs_payload(results, count, offset, request.build_absolute_uri(f'/api/migrate/logs/{tenant_prefix}'))
     return method_unsupported(request.method)
-
-
-@csrf_exempt
-# @login_required
-def endpoints(request):
-    if request.method == 'GET':
-        return JsonResponse([ep.serialize() for ep in ApigeeMgmtEndpoint.objects.all().order_by("endpoint_key")], safe=False)
-    elif request.method == 'POST':
-        data = json.loads(request.body)
-        new_endpoint = ApigeeMgmtEndpoint(endpoint=data.endpoint, endpoint_key=data.endpoint_key)
-        new_endpoint.save()
-    else:
-        return method_unsupported(request.method)
-
-
-@csrf_exempt
-# @login_required
-def endpoint(request, ep_id):
-    if request.method == "GET":
-        get_endpoint = ApigeeMgmtEndpoint.objects.get(pk=ep_id)
-        return JsonResponse(get_endpoint.serialize(), safe=False)
-    elif request.method == "PATCH":
-        put_endpoint = ApigeeMgmtEndpoint.objects.get(pk=ep_id)
-        data = json.loads(request.body)
-        put_endpoint.endpoint = data.endpoint
-        put_endpoint.endpoint_key = data.endpoint_key
-        return JsonResponse(put_endpoint.serialize(), safe=False)
-    elif request.method == 'DELETE':
-        try:
-            ApigeeMgmtEndpoint.objects.filter(id=post_id).delete()
-            return success_response(message=f"Endpoint with id {post_id} deleted")
-        except Exception as error:
-            return server_error(message=f"Could not delete endpoint with id {post_id}: {error}")
-    else:
-        return method_unsupported(request.method)

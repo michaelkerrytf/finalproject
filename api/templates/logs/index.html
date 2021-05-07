@@ -2,9 +2,12 @@
 {% load static %}
 
 {% block body %}
-<a href="/api/view/logs/adex">adex</a> | <a href="/api/view/logs/ats">ats</a> | <a href="/api/view/logs/e33a">e33a</a>
+<a href="/api/view/logs/all">all</a>
+{% for prefix in tenant_prefix_list %}
+| <a href="/api/view/logs/{{ prefix }}">{{ prefix }}</a>
+{% endfor %}
 <hr>
-<h2>Logs for <span id="tenant-prefix">{{ tenant_prefix }}</span></h2>
+<h2>Apigee Migration Tool Logs for <span id="tenant-prefix">{{ tenant_prefix }}</span></h2>
 <hr>
 
 <nav aria-label="Page navigation">
