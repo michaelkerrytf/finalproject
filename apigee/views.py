@@ -9,6 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 # calls to migrate the 'adex-dummy-shared-flow'. I pulled them from the working
 # version of our prototype that connects to the actual Apigee Management API
 
+# in addition, you can change the prefix from 'adex' to 'ats' or 'e33a' and the mock API
+# 'should' still work :)
+
 
 def health(request):
     """
@@ -32,24 +35,20 @@ def info(request, org_name, sharedflow_name: str):
     :param sharedflow_name:
     :return:
     """
-    if sharedflow_name == 'adex-dummy-shared-flow':
-        return JsonResponse({
-            "metaData": {
-                "createdAt": 1617722163245,
-                "createdBy": "mkerry@fas.harvard.edu",
-                "lastModifiedAt": 1617722316447,
-                "lastModifiedBy": "mkerry@fas.harvard.edu"
-            },
-            "name": "adex-dummy-shared-flow",
-            "revision": [
-                "1",
-                "2"
-            ]
-        })
-    else:
-        return JsonResponse({'view': 'info',
-                             'org_name': org_name,
-                             'sharedflow_name': sharedflow_name})
+    tenant_prefix = sharedflow_name.split('-')[0]
+    return JsonResponse({
+        "metaData": {
+            "createdAt": 1617722163245,
+            "createdBy": "mkerry@fas.harvard.edu",
+            "lastModifiedAt": 1617722316447,
+            "lastModifiedBy": "mkerry@fas.harvard.edu"
+        },
+        "name": f"{tenant_prefix}-dummy-shared-flow",
+        "revision": [
+            "1",
+            "2"
+        ]
+    })
 
 
 def bundle(request, org_name, sharedflow_name: str, rev_no: int):
@@ -62,10 +61,11 @@ def bundle(request, org_name, sharedflow_name: str, rev_no: int):
     :param rev_no:
     :return:
     """
+    tenant_prefix=sharedflow_name.split('-')[0]
     format_value = request.GET['format']  # will throw exception if param is missing
     if format_value != 'bundle':
         raise Http404
-    filename = 'adex-dummy-shared-flow-bundle.zip'
+    filename = f'{tenant_prefix}-dummy-shared-flow-bundle.zip'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     with open(f"{dir_path}/files/{filename}", 'rb') as fh:
         zip_file = fh.read()
@@ -80,7 +80,8 @@ def post(request, org_name):
     if action_value != 'import':
         raise Http404
     name_value = request.GET['name']
-    if request.method == 'POST' and name_value == 'adex-dummy-shared-flow':
+    tenant_prefix = name_value.split('-')[0]
+    if request.method == 'POST':
         return JsonResponse(
             {
                 "basepaths": [],
@@ -91,7 +92,7 @@ def post(request, org_name):
                 "createdAt": 1620239321956,
                 "createdBy": "apigee-nonprod-common@harvard.edu",
                 "description": "for testing management api",
-                "displayName": "adex-dummy-shared-flow",
+                "displayName": f"{tenant_prefix}-dummy-shared-flow",
                 "entityMetaDataAsProperties": {
                     "bundle_type": "zip",
                     "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
@@ -103,9 +104,9 @@ def post(request, org_name):
                 "lastModifiedAt": 1620239321956,
                 "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
                 "manifestVersion": "SHA-512:f9ec561eba70e29c6e7e94bd6ff18cb849cbf0559f3e8e53eb3c1bf775d97a32a55fccb37d0988a0d6fc9472ed39c4373850750061a23bca28bbd36da6a60c00",
-                "name": "adex-dummy-shared-flow",
+                "name": f"{tenant_prefix}-dummy-shared-flow",
                 "policies": [
-                    "adex-dummy-assign-message-policy"
+                    f"{tenant_prefix}-dummy-assign-message-policy"
                 ],
                 "proxies": [],
                 "resourceFiles": {
@@ -132,43 +133,34 @@ def post(request, org_name):
 
 @csrf_exempt
 def deploy(request, org_name, env_name: str, sharedflow_name: str, rev_no: int):
+    # these query params are required, so if missing will cause an exception
     delay_value = request.GET['delay']
     force_value = request.GET['force']
-    if sharedflow_name == 'adex-dummy-shared-flow':
-        return JsonResponse({
-            "environment": f"{env_name}",
-            "name": f"{rev_no}",
-            "organization": f"{org_name}",
-            "revision": f"{rev_no}",
-            "server": [{
-                "pod": {
-                    "name": "pausf914f4f0",
-                    "region": "us-east-1"
-                },
-                "status": "deployed",
-                "type": ["message-processor"],
-                "uUID": "9e62531e-518f-4d86-b561-3225f331ef9c"
+    return JsonResponse({
+        "environment": f"{env_name}",
+        "name": f"{rev_no}",
+        "organization": f"{org_name}",
+        "revision": f"{rev_no}",
+        "server": [{
+            "pod": {
+                "name": "pausf914f4f0",
+                "region": "us-east-1"
             },
+            "status": "deployed",
+            "type": ["message-processor"],
+            "uUID": "9e62531e-518f-4d86-b561-3225f331ef9c"
+        },
             {"pod": {
                 "name": "pausf914f4f0",
                 "region": "us-east-1"
-                },
+            },
                 "status": "deployed",
                 "type": ["message-processor"],
                 "uUID": "9976ecdf-9a11-44f4-bb35-6e1694ee5539"}
-            ],
-            "sharedFlow": f"{sharedflow_name}",
-            "state": "deployed"
-        }, status=200)
-    else:
-        return JsonResponse({
-            'view': 'deploy',
-            'org_name': org_name,
-            'env_name': env_name,
-            'sharedflow_name': sharedflow_name,
-            'rev_no': rev_no,
-            'delay': delay_value,
-            'force': force_value}, status=200)
+        ],
+        "sharedFlow": f"{sharedflow_name}",
+        "state": "deployed"
+    }, status=200)
 
 
 def userinfo(request, org_name, userrole_name: str):
@@ -180,32 +172,26 @@ def userinfo(request, org_name, userrole_name: str):
     :return:
     """
     if userrole_name == 'adex-developer':
-        return JsonResponse(['mkerry@fas.harvard.edu'], safe=False)
-    else:
-        return JsonResponse({'view': 'userinfo',
-                             'org_name': org_name,
-                             'userrole_name': userrole_name})
+        users = ['mkerry@fas.harvard.edu']
+    elif userrole_name == 'ats-developer':
+        users = ['mkerry@fas.harvard.edu']
+    else:  # e33a-developer
+        users = ['mkerry@fas.harvard.edu', 'lok026@g.harvard.edu']
+
+    return JsonResponse(users, safe=False)
 
 
 @csrf_exempt
 def assign(request, org_name, userrole_name: str):
+    tenant_prefix = userrole_name.split('-')[0]
     response_body = {
-        'view': 'assign',
-        'org_name': org_name,
-        'userrole_name': userrole_name
+        "resourcePermission": [
+            {"path": f"/sharedflows/{tenant_prefix}-dummy-shared-flow", "permissions": ["delete", "get", "put"]},
+            {"path": f"/sharedflows/{tenant_prefix}-dummy-shared-flow/revisions/*", "permissions": ["delete", "get", "put"]},
+            {"path": f"/environments/*/sharedflows/{tenant_prefix}-dummy-shared-flow/revisions/*/deployments", "permissions": ["delete", "get", "put"]}
+        ]
     }
-    if request.method == "POST":
-        data = json.loads(request.body)
-        if data['resourcePermission'][0]['path'] == '/sharedflows/adex-dummy-shared-flow':
-            response_body = {
-                "resourcePermission": [
-                    {"path": "/sharedflows/adex-dummy-shared-flow", "permissions": ["delete", "get", "put"]},
-                    {"path": "/sharedflows/adex-dummy-shared-flow/revisions/*", "permissions": ["delete", "get", "put"]},
-                    {"path": "/environments/*/sharedflows/adex-dummy-shared-flow/revisions/*/deployments", "permissions": ["delete", "get", "put"]}
-                ]
-            }
-        else:
-            response_body['request'] = data
+
     return JsonResponse(response_body, status=201)
 
 
@@ -216,30 +202,30 @@ full_success_response = {
     "sharedflows":
         {"adex-dummy-shared-flow": {
             "upload": {"basepaths": [], "configurationVersion": {"majorVersion": 4, "minorVersion": 0},
-               "contextInfo": "Revision 28 of application -NA-, in organization -NA-", "createdAt": 1620239321956,
-               "createdBy": "apigee-nonprod-common@harvard.edu", "description": "for testing management api",
-               "displayName": "adex-dummy-shared-flow", "entityMetaDataAsProperties": {"bundle_type": "zip",
-                                                                                       "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
-                                                                                       "createdBy": "apigee-nonprod-common@harvard.edu",
-                                                                                       "lastModifiedAt": "1620239321956",
-                                                                                       "subType": "null",
-                                                                                       "createdAt": "1620239321956"},
-               "lastModifiedAt": 1620239321956, "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
-               "manifestVersion": "SHA-512:f9ec561eba70e29c6e7e94bd6ff18cb849cbf0559f3e8e53eb3c1bf775d97a32a55fccb37d0988a0d6fc9472ed39c4373850750061a23bca28bbd36da6a60c00",
-               "name": "adex-dummy-shared-flow", "policies": ["adex-dummy-assign-message-policy"], "proxies": [],
-               "resourceFiles": {"resourceFile": []}, "resources": [], "revision": "28", "sharedFlows": ["default"],
-               "spec": "", "targetServers": [], "targets": [], "type": "Application"},
-    "deploy": {"environment": "stage", "name": "28", "organization": "harvard-preprod", "revision": "28", "server": [
-        {"pod": {"name": "pausf914f4f0", "region": "us-east-1"}, "status": "deployed", "type": ["message-processor"],
-         "uUID": "9e62531e-518f-4d86-b561-3225f331ef9c"},
-        {"pod": {"name": "pausf914f4f0", "region": "us-east-1"}, "status": "deployed", "type": ["message-processor"],
-         "uUID": "9976ecdf-9a11-44f4-bb35-6e1694ee5539"}], "sharedFlow": "adex-dummy-shared-flow", "state": "deployed"},
-    "assignRole": {
-        "resourcePermission": [{"path": "/sharedflows/adex-dummy-shared-flow", "permissions": ["delete", "get", "put"]},
-                               {"path": "/sharedflows/adex-dummy-shared-flow/revisions/*",
-                                "permissions": ["delete", "get", "put"]},
-                               {"path": "/environments/*/sharedflows/adex-dummy-shared-flow/revisions/*/deployments",
-                                "permissions": ["delete", "get", "put"]}]
-    }}}
+                       "contextInfo": "Revision 28 of application -NA-, in organization -NA-", "createdAt": 1620239321956,
+                       "createdBy": "apigee-nonprod-common@harvard.edu", "description": "for testing management api",
+                       "displayName": "adex-dummy-shared-flow", "entityMetaDataAsProperties": {"bundle_type": "zip",
+                                                                                               "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
+                                                                                               "createdBy": "apigee-nonprod-common@harvard.edu",
+                                                                                               "lastModifiedAt": "1620239321956",
+                                                                                               "subType": "null",
+                                                                                               "createdAt": "1620239321956"},
+                       "lastModifiedAt": 1620239321956, "lastModifiedBy": "apigee-nonprod-common@harvard.edu",
+                       "manifestVersion": "SHA-512:f9ec561eba70e29c6e7e94bd6ff18cb849cbf0559f3e8e53eb3c1bf775d97a32a55fccb37d0988a0d6fc9472ed39c4373850750061a23bca28bbd36da6a60c00",
+                       "name": "adex-dummy-shared-flow", "policies": ["adex-dummy-assign-message-policy"], "proxies": [],
+                       "resourceFiles": {"resourceFile": []}, "resources": [], "revision": "28", "sharedFlows": ["default"],
+                       "spec": "", "targetServers": [], "targets": [], "type": "Application"},
+            "deploy": {"environment": "stage", "name": "28", "organization": "harvard-preprod", "revision": "28", "server": [
+                {"pod": {"name": "pausf914f4f0", "region": "us-east-1"}, "status": "deployed", "type": ["message-processor"],
+                 "uUID": "9e62531e-518f-4d86-b561-3225f331ef9c"},
+                {"pod": {"name": "pausf914f4f0", "region": "us-east-1"}, "status": "deployed", "type": ["message-processor"],
+                 "uUID": "9976ecdf-9a11-44f4-bb35-6e1694ee5539"}], "sharedFlow": "adex-dummy-shared-flow", "state": "deployed"},
+            "assignRole": {
+                "resourcePermission": [{"path": "/sharedflows/adex-dummy-shared-flow", "permissions": ["delete", "get", "put"]},
+                                       {"path": "/sharedflows/adex-dummy-shared-flow/revisions/*",
+                                        "permissions": ["delete", "get", "put"]},
+                                       {"path": "/environments/*/sharedflows/adex-dummy-shared-flow/revisions/*/deployments",
+                                        "permissions": ["delete", "get", "put"]}]
+            }}}
 
 }
