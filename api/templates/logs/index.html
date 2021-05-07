@@ -1,0 +1,29 @@
+{% extends "logs/layout.html" %}
+{% load static %}
+
+{% block body %}
+<h2>Logs for <span id="tenant-prefix">{{ tenant_prefix }}</span></h2>
+<hr>
+
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        <li class="page-item" id="previous-page-btn">
+            <button class="btn btn-outline-primary" aria-label="Previous" data-offset="-10" data-userId="">
+                <span aria-hidden="true">Previous</span>
+            </button>
+        </li>
+        <li class="page-item" id="next-page-btn">
+            <button class="btn btn-outline-primary" aria-label="Next" data-offset="10" data-userId="">
+                <span aria-hidden="true">Next</span>
+            </button>
+        </li>
+    </ul>
+</nav>
+<div id="logs-view"></div>
+
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'logs/index.js' %}"></script>
+{% endblock %}

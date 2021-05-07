@@ -1,5 +1,7 @@
 import json
 
+from django.shortcuts import HttpResponseRedirect, render
+from django.urls import reverse
 from django.http import JsonResponse
 from django.db import connections
 from django.views.decorators.csrf import csrf_exempt
@@ -28,6 +30,19 @@ def server_error(message:str, status:int = 500):
 
 def method_unsupported(method):
     return server_error(message= f"{method} unsupported", status=405)
+
+
+def index(request, tenant_prefix):
+
+    # Authenticated users view their inbox
+    # if request.user.is_authenticated:
+    return render(request, "logs/index.html", {
+        'tenant_prefix': tenant_prefix
+    })
+
+    # Everyone else is prompted to sign in
+    # else:
+      #  return HttpResponseRedirect(reverse("login"))
 
 
 def health(request):
@@ -131,12 +146,14 @@ def return_logs_payload(logs_payload, count, offset, base_url):
     :param count:
     :param offset:
     :param logs_payload:
+    :param base_url:
     :return:
     """
     return JsonResponse(data={
         "count": count,
-        "prev_offset": f"{base_url}?offset={max(offset - 10, 0)}",
-        "next_offset": f"{base_url}?offset={min(offset + 10, int((count-1)/10) * 10)}",
+        "prev": f"{base_url}?offset={max(offset - 10, 0)}",
+        "curr": f"{base_url}?offset={offset}",
+        "next": f"{base_url}?offset={min(offset + 10, int((count-1)/10) * 10)}",
         "logs": [log.serialize() for log in logs_payload]
     }, safe=False, status=200)
 
@@ -157,7 +174,7 @@ def logs(request, tenant_prefix):
             .filter(tenant_prefix=tenant_prefix)\
             .order_by("-created_date")\
             .all()[offset:offset+10]
-        return return_logs_payload(results, count, offset, request.build_absolute_uri(f'/migrate/logs/{tenant_prefix}'))
+        return return_logs_payload(results, count, offset, request.build_absolute_uri(f'/api/migrate/logs/{tenant_prefix}'))
     return method_unsupported(request.method)
 
 

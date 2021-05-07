@@ -1,4 +1,4 @@
-import datetime
+import json
 
 from django.db import models
 
@@ -6,6 +6,10 @@ from django.db import models
 
 DATE_TIME_DISPLAY_FORMAT = "%b %d %Y, %I:%M %p"
 DATE_TIME_SORT_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+
+
+def cleanup(text):
+    return text.replace('b\'{', '{').replace('\'"', '"').replace('\\"', '"')
 
 
 class ApigeeMgmtLog(models.Model):
@@ -24,14 +28,15 @@ class ApigeeMgmtLog(models.Model):
         return {
             "id": self.id,
             "tenantPrefix": self.tenant_prefix,
-            "requestText": self.request_text,
-            "responseText": self.response_text,
+            "requestText": json.dumps(json.loads(self.request_text), indent=2),
+            "responseText": json.dumps(json.loads(self.response_text), indent=2),
             "ipAddr": self.ip_addr,
             "username": self.username,
             "userRoles": self.user_roles,
             "tags": self.build_tags,
             "comment": self.build_comment,
             "createdBy": self.created_by,
+            "timestamp": self.created_date.strftime(DATE_TIME_DISPLAY_FORMAT),
             "createdDate": self.created_date.strftime(DATE_TIME_DISPLAY_FORMAT),
             "createdDateSort": self.created_date.strftime(DATE_TIME_SORT_FORMAT)
         }
