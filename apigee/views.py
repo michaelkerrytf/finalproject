@@ -1,5 +1,4 @@
 import os
-import json
 
 from django.http import JsonResponse, HttpResponse, Http404
 from django.db import connections
@@ -30,6 +29,7 @@ def health(request):
 def info(request, org_name, sharedflow_name: str):
     """
     http://127.0.0.1:8000/apigee/organizations/harvard-preprod/sharedflows/adex-dummy-shared-flow/revisions/2?format=bundle
+    in real API would provide information on the shared flow object for validation
     :param request:
     :param org_name:
     :param sharedflow_name:
@@ -54,7 +54,7 @@ def info(request, org_name, sharedflow_name: str):
 def bundle(request, org_name, sharedflow_name: str, rev_no: int):
     """
     http://127.0.0.1:8000/apigee/organizations/harvard-preprod/sharedflows/adex-dummy-shared-flow/revisions/2?format=bundle
-
+    in real API would download shared flow bundle - here it uses a stored file for that purpose
     :param request:
     :param org_name:
     :param sharedflow_name:
@@ -76,6 +76,12 @@ def bundle(request, org_name, sharedflow_name: str, rev_no: int):
 
 @csrf_exempt
 def post(request, org_name):
+    """
+    in real API would upload and create the shared flow in the target env
+    :param request:
+    :param org_name:
+    :return:
+    """
     action_value = request.GET['action']
     if action_value != 'import':
         raise Http404
@@ -128,6 +134,15 @@ def post(request, org_name):
 
 @csrf_exempt
 def deploy(request, org_name, env_name: str, sharedflow_name: str, rev_no: int):
+    """
+    in real API would cause the shared flow to be deployed to the target env
+    :param request:
+    :param org_name:
+    :param env_name:
+    :param sharedflow_name:
+    :param rev_no:
+    :return:
+    """
     # these query params are required, so if missing will cause an exception
     delay_value = request.GET['delay']
     force_value = request.GET['force']
@@ -161,6 +176,7 @@ def deploy(request, org_name, env_name: str, sharedflow_name: str, rev_no: int):
 def userinfo(request, org_name, userrole_name: str):
     """
     http://127.0.0.1:8000/apigee/organizations/harvard-preprod/userroles/adex-developer/users
+    in real API used for userrole lookup for validation
     :param request:
     :param org_name:
     :param userrole_name:
@@ -178,6 +194,13 @@ def userinfo(request, org_name, userrole_name: str):
 
 @csrf_exempt
 def assign(request, org_name, userrole_name: str):
+    """
+    in real API sets appropriate permissions on shared flow in target env
+    :param request:
+    :param org_name:
+    :param userrole_name:
+    :return:
+    """
     tenant_prefix = userrole_name.split('-')[0]
     response_body = {
         "resourcePermission": [
@@ -189,7 +212,8 @@ def assign(request, org_name, userrole_name: str):
 
     return JsonResponse(response_body, status=201)
 
-# here's an example of the successful migration in the real system
+
+# here's an example of a successful migration in the real system
 full_success_response = {
     "result": {
         "SUCCESS": "Successfully migrated payload"
