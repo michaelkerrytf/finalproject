@@ -44,7 +44,16 @@ def method_unsupported(method):
 
 def bare_index(request):
     """
+    redirect to view all logs
+    :param request:
+    :return:
+    """
+    return HttpResponseRedirect('view/logs/all')
 
+
+def bare_view_logs(request):
+    """
+    redirect to view all logs
     :param request:
     :return:
     """

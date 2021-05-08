@@ -6,9 +6,14 @@ from django.test import TestCase, Client
 
 empty_request_data = {
             "metadata": {
-                "ipAddr": "123.123.123.123"
+                "tenant-prefix": "adex",
+                "username": "mkerry@fas.harvard.edu",
+                "userRoles": ["adex-developer"],
+                "ipAddr": None
             },
             "request": {
+                "buildTags": "",
+                "comment": "",
                 "sharedFlows": [],
                 "proxies": [],
                 "specs": [],
@@ -16,7 +21,27 @@ empty_request_data = {
             }
         }
 
+
 class TestResponse(TestCase):
+
+    def test_bare_index(self):
+        """
+        should redirect to
+        :return:
+        """
+        c = Client()
+        response = c.get("")
+        self.assertEqual(response.status_code, 302)
+
+    def test_bare_view_logs(self):
+        c = Client()
+        response = c.get("/api/view/logs")
+        self.assertEqual(response.status_code, 302)
+
+    def test_view_logs_all(self):
+        c = Client()
+        response = c.get("/api/view/logs/all")
+        self.assertEqual(response.status_code, 200)
 
     def test_health(self):
         c = Client()
@@ -51,8 +76,8 @@ class TestResponse(TestCase):
     def test_stage_post_empty_artifacts(self):
         c = Client()
         response = c.post("/api/migrate/stage", json.dumps(empty_request_data), content_type="application/json")
-        self.assertEqual(response.content,  b'{"message": "ERROR: ERROR: \'tenant-prefix\'"}')
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content,  b'{"result": {"SUCCESS": "Successfully migrated payload"}}')
+        self.assertEqual(response.status_code, 200)
 
     def test_prod_get(self):
         c = Client()
@@ -82,8 +107,8 @@ class TestResponse(TestCase):
     def test_prod_post_empty_artifacts(self):
         c = Client()
         response = c.post("/api/migrate/prod", json.dumps(empty_request_data), content_type="application/json")
-        self.assertEqual(response.content,  b'{"message": "ERROR: ERROR: \'tenant-prefix\'"}')
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content,   b'{"result": {"SUCCESS": "Successfully migrated payload"}}')
+        self.assertEqual(response.status_code, 200)
 
     def test_logs_adex_empty(self):
         c = Client()

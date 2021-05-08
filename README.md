@@ -44,6 +44,17 @@ pip install -r requirements.txt
 python manage.py test
 ```
 
+### test coverage
+```commandline
+coverage run --source='.' manage.py test 
+coverage annotate -d coverage_annotations  
+coverage html 
+```
+will produce test coverage that should be viewable at `<path_to_parent>/finalproject/htmlcov/index.html`
+
+In a typical project I would be shooting for a fairly high coverage (85-90%) but as mentioned above, these unit tests
+were more of jumping-off point, and I relied more on the postman tests to confirm behavior
+
 ### to run application locally
 ```commandline
 python manage.py runserver
